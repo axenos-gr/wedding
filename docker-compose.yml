@@ -1,0 +1,15 @@
+services:
+    backend:
+        image: ghcr.io/axenos-gr/wedding/backend:latest
+        container_name: wedding-backend
+        env_file: .env.backend
+        ports:
+            - "6000:6000"
+        restart: on-failure:5
+        environment:
+            - TZ=Asia/Almaty
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
