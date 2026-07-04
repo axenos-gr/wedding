@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS users (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    hash VARCHAR(255) NOT NULL,
+    is_admin BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS events (
+    name VARCHAR(255) PRIMARY KEY,
+    date TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS files (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    file_path VARCHAR(255) NOT NULL,
+    creation_date TIMESTAMPTZ NOT NULL
+);
+
+INSERT INTO users (name, hash, is_admin)
+VALUES ('admin', '$argon2id$v=19$m=32,t=2,p=1$YXNkbGtqZndvaWplZg$6Vyo4/lmvluA3VWsZ3fTJw', true)
+ON CONFLICT DO NOTHING;
