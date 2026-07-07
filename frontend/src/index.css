@@ -1,0 +1,37 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Libre+Baskerville:ital,wght@0,400..700;1,400..700&display=swap");
+
+@theme {
+    --color-page: #fff9ed;
+    --color-primary: #41351f;
+    --font-bickham: "Bickham Script Pro Regular";
+    --font-marggraff: "Marggraff Kursiv Zarte";
+}
+
+@font-face {
+    font-family: "Bickham Script Pro Regular";
+    src: url("./assets/fonts/Bickham Script Pro Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Marggraff Kursiv Zarte";
+    src: url("./assets/fonts/Marggraff Kursiv Zarte.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+#root {
+    min-height: 100vh;
+    background-color: #bfbea9;
+    font-family: "Libre Baskerville", serif;
+}
