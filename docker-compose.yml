@@ -1,11 +1,12 @@
 services:
     backend:
+        build: ./backend
         image: ghcr.io/axenos-gr/wedding/backend:latest
         container_name: wedding-backend
         env_file: .env.backend
         ports:
-            - "6000:6000"
-        restart: on-failure:5
+            - "127.0.0.1:6000:6000"
+        restart: always
         environment:
             - TZ=Asia/Almaty
         logging:
@@ -13,6 +14,15 @@ services:
             options:
                 max-size: "10m"
                 max-file: "3"
+    frontend:
+        build: ./frontend
+        image: ghcr.io/axenos-gr/wedding/frontend:latest
+        container_name: wedding-frontend
+        ports:
+            - "127.0.0.1:6001:6001"
+        restart: always
+        environment:
+            - TZ=Asia/Almaty
     postgres:
         image: postgres:15-alpine
         container_name: wedding-db
@@ -40,4 +50,4 @@ services:
         restart: always
 
 volumes:
-  postgres_data:
+    postgres_data:
