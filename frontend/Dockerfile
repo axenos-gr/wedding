@@ -20,4 +20,4 @@ WORKDIR /root
 
 COPY --from=builder /app/dist .
 
-ENTRYPOINT [ "serve", "-l", "6001"]
+ENTRYPOINT [ "serve", "-s", "-l", "6001"]
