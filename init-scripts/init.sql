@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE TABLE IF NOT EXISTS files (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     file_path VARCHAR(255) NOT NULL,
-    creation_date TIMESTAMPTZ NOT NULL
+    creation_date TIMESTAMPTZ NOT NULL,
+    extension VARCHAR(20) NOT NULL, -- jpg | mp4
+    validated BOOLEAN NOT NULL
 );
 
 INSERT INTO users (name, hash, is_admin)

@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -73,6 +75,10 @@ func main() {
 		log.Fatalf("Database unreachable: %v", err)
 	}
 
+	if err := os.MkdirAll("uploads", os.ModePerm); err != nil {
+		log.Fatalf("Failed to create uploads directory: %v", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/logout", logoutHandler)
 	mux.HandleFunc("/login", loginHandler)
@@ -80,6 +86,8 @@ func main() {
 	mux.HandleFunc("/user/change-password", changePasswordHandler)
 	mux.HandleFunc("/events", getEventsHandler)
 	mux.HandleFunc("/change-events", updateEventsHandler)
+	mux.HandleFunc("/upload", uploadHandler)
+	mux.HandleFunc("/app", downloadApkHandler)
 
 	handlerWithCORS := corsMiddleware(mux)
 
@@ -413,6 +421,67 @@ func updateEventsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"message":"Event dates updated successfully"}`))
 }
 
+func uploadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseMultipartForm(500 << 20); err != nil {
+		http.Error(w, "File too large or invalid form", http.StatusBadRequest)
+		return
+	}
+
+	file, handler, err := r.FormFile("media")
+	if err != nil {
+		http.Error(w, "Error retrieving the file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	ext := strings.ToLower(filepath.Ext(handler.Filename))
+	if ext == "" {
+		ext = ".bin"
+	}
+	extWithoutDot := strings.TrimPrefix(ext, ".")
+
+	fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	filePath := filepath.Join("uploads", fileName)
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		http.Error(w, "Error saving the file locally", http.StatusInternalServerError)
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		http.Error(w, "Error writing file content", http.StatusInternalServerError)
+		return
+	}
+
+	query := `INSERT INTO files (file_path, creation_date, extension, validated) VALUES ($1, $2, $3, $4)`
+	_, err = db.Exec(query, filePath, time.Now(), extWithoutDot, false)
+	if err != nil {
+		log.Printf("DB Error: %v", err)
+		http.Error(w, "Error saving to database", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"message":"Upload successful"}`))
+}
+
+func downloadApkHandler(w http.ResponseWriter, r *http.Request) {
+	filePath := "/root/apk/app.apk"
+
+	w.Header().Set("Content-Disposition", "attachment; filename=wedding.apk")
+	w.Header().Set("Content-Type", "application/vnd.android.package-archive")
+
+	http.ServeFile(w, r, filePath)
+}
+
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
@@ -441,7 +510,8 @@ func loadEnv() {
 		return fallback
 	}
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		getEnv("DB_HOST", "localhost"),
 		getEnv("DB_PORT", "5432"),
 		getEnv("DB_USER", "postgres"),
